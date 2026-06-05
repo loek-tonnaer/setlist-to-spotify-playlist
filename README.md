@@ -165,6 +165,24 @@ rm -rf .cache_setlistfm/
 
 `.cache_setlistfm/` is listed in `.gitignore` and will not be committed.
 
+## Spotify URI caching
+
+Spotify track lookups are cached to `.cache_spotify/` (one JSON file per song/artist pair). On re-runs, previously resolved tracks are returned instantly without hitting the Spotify search API.
+
+**Practical effect:** re-running for the same lineup (e.g. adding one new band to a festival file) only searches for tracks from the new band — all previously resolved songs are served from cache.
+
+**What's cached:** the result of every `track:<song> artist:<artist>` search, including songs that were not found (stored as `null`). Not-found results are also cached so the search isn't retried on every run.
+
+**What goes stale:** almost never. Spotify track URIs are permanent. The only reason to clear the cache is if you suspect a better match has been added to Spotify since your last run.
+
+To force a full re-fetch:
+
+```bash
+rm -rf .cache_spotify/
+```
+
+`.cache_spotify/` is listed in `.gitignore` and will not be committed.
+
 ---
 
 ## Adding new song selection strategies
