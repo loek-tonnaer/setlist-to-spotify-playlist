@@ -1,0 +1,11 @@
+.env
+.cache
+.cache-*
+.cache_setlistfm/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+.venv/
+venv/
+.idea/
