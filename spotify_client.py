@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import hashlib
+import json
+from pathlib import Path
+
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
 _SCOPES = "playlist-modify-public playlist-modify-private"
 _BATCH_SIZE = 100  # Spotify API limit per add-tracks call
+_CACHE_DIR = Path(__file__).parent / ".cache_spotify"
 
 
 class SpotifyClient:
@@ -17,13 +22,25 @@ class SpotifyClient:
                 scope=_SCOPES,
             )
         )
+        _CACHE_DIR.mkdir(exist_ok=True)
+
+    def _cache_path(self, song: str, artist: str) -> Path:
+        key = f"{artist.lower()}|{song.lower()}"
+        digest = hashlib.md5(key.encode()).hexdigest()
+        return _CACHE_DIR / f"{digest}.json"
 
     def find_track_uri(self, song: str, artist: str) -> str | None:
         """Return the Spotify URI for the best-matching track, or None if not found."""
+        cache_file = self._cache_path(song, artist)
+        if cache_file.exists():
+            return json.loads(cache_file.read_text(encoding="utf-8"))["uri"]
+
         query = f"track:{song} artist:{artist}"
         results = self._sp.search(q=query, type="track", limit=1)
         items = results.get("tracks", {}).get("items", [])
-        return items[0]["uri"] if items else None
+        uri = items[0]["uri"] if items else None
+        cache_file.write_text(json.dumps({"uri": uri}), encoding="utf-8")
+        return uri
 
     def create_playlist(self, name: str, track_uris: list[str], public: bool = False) -> str:
         """Create a new playlist, populate it in batches, and return its Spotify URL."""

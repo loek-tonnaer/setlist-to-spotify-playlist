@@ -104,6 +104,7 @@ python main.py Radiohead --file more_bands.txt
 |---|---|---|
 | `--name NAME` / `-n NAME` | Band names joined by ` + ` | Playlist name |
 | `--shows N` / `-s N` | `5` | Number of recent shows to pull songs from |
+| `--staples PCT` | `0` | Only include songs played in at least PCT% of the fetched shows (0 = any song played at least once) |
 | `--before DATE` | Today | Only include shows strictly before this date (`YYYY-MM-DD`) |
 | `--public` | off (private) | Make the playlist public |
 | `--file PATH` / `-f PATH` | — | Text file with one band per line |
@@ -178,5 +179,4 @@ To add a new strategy:
 
 Ideas for future strategies (all doable client-side):
 - **Most-played** — songs sorted by frequency across N shows
-- **Staples** — songs played in ≥ X% of fetched setlists
 - **Recent window** — unique songs from shows within the last X months

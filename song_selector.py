@@ -25,16 +25,29 @@ def _live_songs(setlist: dict) -> list[str]:
 # Strategies
 # ---------------------------------------------------------------------------
 
-def select_last_n_shows(setlists: list[dict], n: int) -> list[str]:
-    """All unique songs played across the N most recent setlists, in first-seen order."""
-    seen: set[str] = set()
-    result: list[str] = []
-    for setlist in setlists[:n]:
-        for song in _live_songs(setlist):
-            if song not in seen:
-                seen.add(song)
-                result.append(song)
-    return result
+def select_last_n_shows(setlists: list[dict], n: int, min_pct: float = 0) -> list[str]:
+    """
+    Unique songs from the N most recent setlists that were played in at least
+    min_pct% of those shows, returned in first-seen order.
+    min_pct=0 (default) includes every song that appeared at least once.
+    """
+    batch = setlists[:n]
+    if not batch:
+        return []
+    counts: dict[str, int] = {}
+    first_seen_order: dict[str, int] = {}
+    order = 0
+    for setlist in batch:
+        for song in set(_live_songs(setlist)):
+            counts[song] = counts.get(song, 0) + 1
+            if song not in first_seen_order:
+                first_seen_order[song] = order
+                order += 1
+    threshold = min_pct / 100 * len(batch)
+    return [
+        song for song in sorted(first_seen_order, key=first_seen_order.__getitem__)
+        if counts[song] >= threshold
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -47,9 +60,10 @@ def select_songs(setlists: list[dict], strategy: str = "last_n", **kwargs) -> li
 
     Supported strategies
     --------------------
-    last_n  All unique songs from the N most recent shows.
-            kwargs: n (int, default 5)
+    last_n  All unique songs from the N most recent shows that appear in at
+            least min_pct% of those shows.
+            kwargs: n (int, default 5), min_pct (float, default 0)
     """
     if strategy == "last_n":
-        return select_last_n_shows(setlists, n=kwargs.get("n", 5))
+        return select_last_n_shows(setlists, n=kwargs.get("n", 5), min_pct=kwargs.get("min_pct", 0))
     raise ValueError(f"Unknown strategy: {strategy!r}")

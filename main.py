@@ -56,6 +56,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Only include shows before this date (YYYY-MM-DD). Defaults to today.",
     )
     parser.add_argument(
+        "--staples",
+        type=int,
+        default=0,
+        metavar="PCT",
+        help=(
+            "Only include songs played in at least PCT%% of the fetched shows "
+            "(0–100, default: 0 = include every song played at least once)."
+        ),
+    )
+    parser.add_argument(
         "--public",
         action="store_true",
         help="Make the playlist public (default: private).",
@@ -95,6 +105,10 @@ def main() -> None:
         print("Error: provide at least one band via arguments or --file.", file=sys.stderr)
         sys.exit(1)
 
+    if not (0 <= args.staples <= 100):
+        print("Error: --staples must be between 0 and 100.", file=sys.stderr)
+        sys.exit(1)
+
     if args.before:
         try:
             before_date = datetime.date.fromisoformat(args.before)
@@ -128,7 +142,7 @@ def main() -> None:
         setlists = setlist_client.get_setlists(mbid, args.shows, before=before_date)
         print(f"  Got {len(setlists)} setlist(s).")
 
-        songs = select_songs(setlists, strategy="last_n", n=args.shows)
+        songs = select_songs(setlists, strategy="last_n", n=args.shows, min_pct=args.staples)
         print(f"  {len(songs)} unique song(s) across those shows.")
 
         print("  Searching Spotify...")
