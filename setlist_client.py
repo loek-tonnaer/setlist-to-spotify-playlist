@@ -52,7 +52,12 @@ class SetlistClient:
 
     def get_artist_mbid(self, name: str) -> str:
         """Return the MusicBrainz ID for the best-matching artist name."""
-        data = self._get("/search/artists", {"artistName": name, "sort": "relevance"})
+        try:
+            data = self._get("/search/artists", {"artistName": name, "sort": "relevance"})
+        except requests.exceptions.HTTPError as exc:
+            if exc.response is not None and exc.response.status_code == 404:
+                raise ValueError(f"No artist found for: {name!r}") from exc
+            raise
         artists = data.get("artist", [])
         if not artists:
             raise ValueError(f"No artist found for: {name!r}")
